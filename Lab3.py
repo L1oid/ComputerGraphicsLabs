@@ -21,23 +21,28 @@ y2 = 250
 x3 = 250
 y3 = 250
 
+x1new = x1
+y1new = y1
+x1new2 = x1
+y1new2 = y1
+x2new = x2
+y2new = y2
+x2new2 = x2
+y2new2 = y2
+x3new = x3
+y3new = y3
+
 c.create_line(x1, y1, x2, y2)
 c.create_line(x2, y2, x3, y3)
 c.create_line(x3, y3, x1, y1)
 
-
 def cross(x1, y1, x2, y2, x3, y3, x4, y4):
-    n = 0
     if y2 - y1 != 0:
         q = (x2 - x1) / (y1 - y2)
         sn = (x3 - x4) + (y3 - y4) * q
-        if sn <= 0:
-            return 0, 0
         fn = (x3 - x1) + (y3 - y1) * q
         n = fn / sn
     else:
-        if y3 - y4 <= 0:
-            return 0, 0
         n = (y3 - y1) / (y3 - y4)
     xcross = x3 + (x4 - x3) * n
     ycross = y3 + (y4 - y3) * n
@@ -45,36 +50,45 @@ def cross(x1, y1, x2, y2, x3, y3, x4, y4):
 
 def up_triangle():
     global x1, y1, x2, y2, x3, y3
+    global x1new, y1new, x1new2, y1new2, x2new, y2new, x2new2, y2new2, x3new, y3new
+
     c.create_line(x1, y1, x2, y2, fill='white')
     c.create_line(x2, y2, x3, y3, fill='white')
     c.create_line(x3, y3, x1, y1, fill='white')
+
+    c.create_line(x1new, y1new, x2new, y2new, fill='white')
+    c.create_line(x2new, y2new, x3new, y3new, fill='white')
+    c.create_line(x3new, y3new, x1new2, y1new2, fill='white')
 
     y1 -= 5
     y2 -= 5
     y3 -= 5
 
-
-    if y1 <= topY or x2 <= topX:
+    if y1 <= topY:
+        print("Есть пересечения")
         x1new, y1new = cross(x1, y1, x2, y2, topX, topY, botX, topY)
-        if x1new == 0 and y1new == 0:
-            x1new = x1
-            y1new = y1
         x1new2, y1new2 = cross(x3, y3, x1, y1, topX, topY, botX, topY)
-        if x1new2 == 0 and y1new2 == 0:
-            x1new2 = x1
-            y1new2 = y1
-        x2new, y2new = cross(x1, y1, x2, y2, topX, topY, topX, botY)
-        if x2new == 0 and y2new == 0:
+        if y2 <= topY:
+            print("klol")
+            x1new = topX
+            y1new = topY
+            x1new2 = topX
+            y1new2 = topY
+            x2new = topX
+            y2new = topY
+            x3new = topX
+            y3new = topY
+        else:
+            print("debil")
             x2new = x2
             y2new = y2
-        x2new2, y2new2 = cross(x2, y2, x3, y3, topX, topY, topX, botY)
-        if x2new2 == 0 and y2new2 == 0:
-            x2new2 = x2
-            y2new2 = y2
+            x3new = x3
+            y3new = y3
         c.create_line(x1new, y1new, x2new, y2new)
-        c.create_line(x2new2, y2new2, x3, y3)
-        c.create_line(x3, y3, x1new2, y1new2)
+        c.create_line(x2new, y2new, x3new, y3new)
+        c.create_line(x3new, y3new, x1new2, y1new2)
     else:
+        print("Нет пересечение")
         c.create_line(x1, y1, x2, y2)
         c.create_line(x2, y2, x3, y3)
         c.create_line(x3, y3, x1, y1)
@@ -95,8 +109,6 @@ def down_triangle():
     c.create_line(x1, y1, x2, y2)
     c.create_line(x2, y2, x3, y3)
     c.create_line(x3, y3, x1, y1)
-
-    c.create_rectangle(150, 100, 350, 300)
 
 
 def right_triangle():
