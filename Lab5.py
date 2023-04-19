@@ -1,6 +1,7 @@
 import pygame
 import pygame as pg
 import sys
+import math
 
 DMC = [
     (255,255,255),
@@ -364,15 +365,16 @@ DMC = [
     (140,117,109),
     (81,76,83)
 ]
-
 size = len(DMC)
 
-W = 900
-H = 900
-STEP = 15
+pygame.font.init()
 
-sc = pg.display.set_mode((W, H))
 surf = pg.image.load('image.jpg')
+W = surf.get_width()
+H = surf.get_height()
+STEP = 10
+sc = pg.display.set_mode((W, H))
+number_font = pygame.font.Font(None, 1)
 
 while W % STEP != 0:
     W -= 1
@@ -381,6 +383,7 @@ while H % STEP != 0:
     H -= 1
 
 result = pygame.surface.Surface((W / STEP, H / STEP))
+result2 = pygame.surface.Surface((W / STEP, H / STEP))
 
 for x in range(0, W, STEP):
     for y in range(0, H, STEP):
@@ -397,10 +400,36 @@ for x in range(0, W, STEP):
         g //= STEP ** 2
         b //= STEP ** 2
 
-        result.set_at((x // STEP, y // STEP), (r, g, b))
+        min_color = 999999999
+        min_r = 0
+        min_g = 0
+        min_b = 0
+        id_color = 0
+
+        for i in range(0, size):
+            current_dmc_color = math.sqrt(((r - DMC[i][0]) ** 2) + ((g - DMC[i][1]) ** 2) + ((b - DMC[i][2]) ** 2))
+            if current_dmc_color < min_color:
+                id_color = str(i)
+                min_color = current_dmc_color
+                min_r = DMC[i][0]
+                min_g = DMC[i][1]
+                min_b = DMC[i][2]
+
+        result.set_at((x // STEP, y // STEP), (min_r, min_g, min_b))
+
+# temp = number_font.render("TTTTTT", True, (255, 255, 255))
+# result.blit(temp, (2, 2))
+
+res = pygame.Surface((W * 10, H * 10))
+
+for x in range(W):
+    for y in range(H):
+        res.fill(result.get_at((x, y)), (x * 10, y * 10, 10, 10))
+
+
+pygame.image.save(res, "out.png")
 
 rect = surf.get_rect(bottomright=(W, H))
-pygame.image.save(result, "out.png")
 sc.blit(surf, rect)
 
 pg.display.update()
