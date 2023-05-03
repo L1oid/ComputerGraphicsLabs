@@ -365,6 +365,63 @@ DMC = [
     (140,117,109),
     (81,76,83)
 ]
+
+
+def find_dmc_like_color(r, g, b):
+    _r = None
+    _g = None
+    _b = None
+    _s = None
+
+    for col in DMC:
+        dr, dg, db = col
+        rt = dr - r
+        gt = dg - g
+        bt = db - b
+
+        st = math.sqrt(rt**2 + gt**2 + bt**2)
+
+        if (_s is None) or _s > st:
+            _s = st
+            _r = rt
+            _g = gt
+            _b = bt
+
+    return (r + _r, g + _g, b + _b)
+
+
+def negative_color(col):
+    r, g, b = col
+    return (255 - r, 255 - g, 255 - b)
+
+
+def find_pallet_like_color(pallet, col, tolerance):
+    r, g, b = col
+
+    _r = None
+    _g = None
+    _b = None
+    _s = None
+
+    for col in pallet:
+        dr, dg, db = col
+        rt = dr - r
+        gt = dg - g
+        bt = db - b
+
+        st = math.sqrt(rt**2 + gt**2 + bt**2)
+
+        if (_s is None) or _s > st:
+            _s = st
+            _r = rt
+            _g = gt
+            _b = bt
+
+    if _s <= tolerance:
+        return (r + _r, g + _g, b + _b)
+    return (r, g, b)
+
+
 size = len(DMC)
 
 pygame.font.init()
@@ -372,9 +429,12 @@ pygame.font.init()
 surf = pg.image.load('image.jpg')
 W = surf.get_width()
 H = surf.get_height()
-STEP = 10
+STEP = 30
 sc = pg.display.set_mode((W, H))
-number_font = pygame.font.Font(None, 1)
+fonts = pygame.font.get_fonts()
+sans = fonts[7]
+sans_small = pygame.font.SysFont(sans, 10)
+sans_small_for_color = pygame.font.SysFont(sans, 26)
 
 while W % STEP != 0:
     W -= 1
@@ -383,9 +443,13 @@ while H % STEP != 0:
     H -= 1
 
 result = pygame.surface.Surface((W / STEP, H / STEP))
-result2 = pygame.surface.Surface((W / STEP, H / STEP))
+
+color_set = []
+
+color_rows = []
 
 for x in range(0, W, STEP):
+    color_columns = []
     for y in range(0, H, STEP):
         r, g, b = 0, 0, 0
 
@@ -400,34 +464,64 @@ for x in range(0, W, STEP):
         g //= STEP ** 2
         b //= STEP ** 2
 
-        min_color = 999999999
-        min_r = 0
-        min_g = 0
-        min_b = 0
-        id_color = 0
+        result.set_at((x // STEP, y // STEP), (r, g, b))
 
-        for i in range(0, size):
-            current_dmc_color = math.sqrt(((r - DMC[i][0]) ** 2) + ((g - DMC[i][1]) ** 2) + ((b - DMC[i][2]) ** 2))
-            if current_dmc_color < min_color:
-                id_color = str(i)
-                min_color = current_dmc_color
-                min_r = DMC[i][0]
-                min_g = DMC[i][1]
-                min_b = DMC[i][2]
+        if color_set:
+            for col in color_set:
+                tolerance = 32
+                r, g, b = find_pallet_like_color(color_set, (r, g, b), tolerance)
 
-        result.set_at((x // STEP, y // STEP), (min_r, min_g, min_b))
+        if (r, g, b) in color_set:
+            color_columns.append(color_set.index((r, g, b)))
+        else:
+            color_columns.append(len(color_set))
+            color_set.append((r, g, b))
 
-# temp = number_font.render("TTTTTT", True, (255, 255, 255))
-# result.blit(temp, (2, 2))
+    color_rows.append(color_columns)
+pygame.image.save(result, "pixelised.png")
 
-res = pygame.Surface((W * 10, H * 10))
+true_color_set = []
+for col in color_set:
+    r, g, b = col
+    true_col = find_dmc_like_color(r, g, b)
 
-for x in range(W):
-    for y in range(H):
-        res.fill(result.get_at((x, y)), (x * 10, y * 10, 10, 10))
+    true_color_set.append(true_col)
+
+for x, r in enumerate(color_rows):
+    for y, c in enumerate(r):
+        result.set_at((x, y), true_color_set[c])
+
+pygame.image.save(result, "recolored.png")
+
+w, h = result.get_size()
+result = pygame.Surface((w * 21, h * 21))
+
+for x, r in enumerate(color_rows):
+    for y, c in enumerate(r):
+        result.fill(true_color_set[c], (x * 21, y * 21, 21, 21))
+        text = sans_small.render(str(c), True, negative_color(true_color_set[c]))
+        result.blit(text, (x * 21 + (20 - text.get_width()), y * 21))
+
+pygame.image.save(result, "scheme.png")
+
+w_2 = 72
+h_2 = 36 * len(true_color_set)
+result2 = pygame.Surface((w_2, h_2))
 
 
-pygame.image.save(res, "out.png")
+
+for i in range(len(true_color_set)):
+    for x in range(0, 36):
+        for y in range(i * 36, (i + 1) * 36):
+            result2.set_at((x, y), true_color_set[i])
+
+for i in range(len(true_color_set)):
+    color_id = sans_small_for_color.render(str(i), True, (255, 255, 255))
+    result2.blit(color_id, (38, i * 36))
+
+
+pygame.image.save(result2, "colors.png")
+
 
 rect = surf.get_rect(bottomright=(W, H))
 sc.blit(surf, rect)
